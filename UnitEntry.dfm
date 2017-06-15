@@ -1,0 +1,54 @@
+object FormEntry: TFormEntry
+  Left = 0
+  Top = 0
+  BorderStyle = bsDialog
+  Caption = 'FormEntry'
+  ClientHeight = 105
+  ClientWidth = 210
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poMainFormCenter
+  PixelsPerInch = 96
+  TextHeight = 13
+  object BitBtn1: TBitBtn
+    Left = 16
+    Top = 69
+    Width = 75
+    Height = 25
+    Kind = bkOK
+    NumGlyphs = 2
+    TabOrder = 1
+  end
+  object BitBtn2: TBitBtn
+    Left = 118
+    Top = 69
+    Width = 75
+    Height = 25
+    Kind = bkCancel
+    NumGlyphs = 2
+    TabOrder = 2
+  end
+  object MaskEdit1: TMaskEdit
+    Left = 8
+    Top = 8
+    Width = 193
+    Height = 42
+    Alignment = taCenter
+    EditMask = '00:00:00:00;1;_'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -32
+    Font.Name = 'Tahoma'
+    Font.Pitch = fpFixed
+    Font.Style = []
+    MaxLength = 11
+    ParentFont = False
+    TabOrder = 0
+    Text = '00:00:00:00'
+  end
+end
