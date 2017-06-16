@@ -11,7 +11,7 @@ uses
   VCL.Graphics, VCL.Controls, VCL.Forms, VCL.Dialogs, VCL.StdCtrls, VCL.Menus,
   VCL.ExtCtrls,
   GMFBridgeLib_TLB, DeckLink,
-  reader_thread, UnitChannel, UnitClip, UnitTelnet, VCL.ComCtrls;
+  reader_unit, UnitChannel, UnitClip, UnitTelnet, VCL.ComCtrls;
 
 const
   WM_TC = WM_USER + 1;
@@ -19,12 +19,11 @@ const
 
 type
   TSdiParams = record
+    Card_no: integer;
     UseSDI: boolean;
     Channel1, Channel2: integer;
     CapWidth, CapHeight: integer;
     NeededFrameInterval: integer;
-    DLV_CLSID: TGUID;
-    DLA_CLSID: TGUID;
   end;
 
   TGroupBox = class(VCL.StdCtrls.TGroupBox)
@@ -62,6 +61,7 @@ type
     LabelOffset: TLabel;
     LabelTelnet: TLabel;
     TelnetSend: TButton;
+    PanelVideo: TPanel;
     procedure WndProc(var Msg: TMessage); override;
     procedure MemoOut(instring: string);
     procedure FormCreate(Sender: TObject);
@@ -132,7 +132,7 @@ type
 var
   FormTCreader: TFormTCreader;
 
-  audio_process: AudioTCReaderThread;
+  audio_process: TAudioTCReader;
 
   PlayChannels: array of TLocalOneChannel;
 
@@ -278,52 +278,7 @@ begin
         SdiParams.NeededFrameInterval :=
           ini.ReadInteger('sdi', 'frameinterval', 40000);
 
-        i := ini.ReadInteger('sdi', 'card_no', 1);
-
-        case i of
-          1:
-            begin
-              SdiParams.DLV_CLSID := CLSID_DecklinkVideoCaptureFilter;
-              SdiParams.DLA_CLSID := CLSID_DecklinkAudioCaptureFilter;
-            end;
-          2:
-            begin
-              SdiParams.DLV_CLSID := CLSID_DecklinkVideoCaptureFilter2;
-              SdiParams.DLA_CLSID := CLSID_DecklinkAudioCaptureFilter2;
-            end;
-          3:
-            begin
-              SdiParams.DLV_CLSID := CLSID_DecklinkVideoCaptureFilter3;
-              SdiParams.DLA_CLSID := CLSID_DecklinkAudioCaptureFilter3;
-            end;
-          4:
-            begin
-              SdiParams.DLV_CLSID := CLSID_DecklinkVideoCaptureFilter4;
-              SdiParams.DLA_CLSID := CLSID_DecklinkAudioCaptureFilter4;
-            end;
-          5:
-            begin
-              SdiParams.DLV_CLSID := CLSID_DecklinkVideoCaptureFilter5;
-              SdiParams.DLA_CLSID := CLSID_DecklinkAudioCaptureFilter5;
-            end;
-          6:
-            begin
-              SdiParams.DLV_CLSID := CLSID_DecklinkVideoCaptureFilter6;
-              SdiParams.DLA_CLSID := CLSID_DecklinkAudioCaptureFilter6;
-            end;
-          7:
-            begin
-              SdiParams.DLV_CLSID := CLSID_DecklinkVideoCaptureFilter7;
-              SdiParams.DLA_CLSID := CLSID_DecklinkAudioCaptureFilter7;
-            end;
-          8:
-            begin
-              SdiParams.DLV_CLSID := CLSID_DecklinkVideoCaptureFilter8;
-              SdiParams.DLA_CLSID := CLSID_DecklinkAudioCaptureFilter8;
-            end;
-        else
-          raise EMyOwnException.Create('Неправильно задан номер карты');
-        end;
+        SdiParams.Card_no := ini.ReadInteger('sdi', 'card_no', 1);
 
         TC_offset := ini.ReadInteger('sdi', 'tc_offset', 0);
       end
@@ -651,30 +606,31 @@ begin
 
     ini.WriteString('common', 'syncpoint', TCtoString(TC_SP));
 
-    {
+    if not SdiParams.UseSDI then
+    begin
       if AudioDeviceName <> '' then
-      ini.WriteString('audio', 'device_id', AudioDeviceName);
+        ini.WriteString('audio', 'device_id', AudioDeviceName);
 
       if Channel0Sel.Checked then
       begin
-      ini.WriteBool('audio', 'diff_mode', false);
-      ini.WriteInteger('audio', 'in_channel', 0);
+        ini.WriteBool('audio', 'diff_mode', false);
+        ini.WriteInteger('audio', 'in_channel', 0);
       end
       else if Channel1sel.Checked then
       begin
-      ini.WriteBool('audio', 'diff_mode', false);
-      ini.WriteInteger('audio', 'in_channel', 1);
+        ini.WriteBool('audio', 'diff_mode', false);
+        ini.WriteInteger('audio', 'in_channel', 1);
       end
       else if ChannelDiffSel.Checked then
       begin
-      ini.WriteBool('audio', 'diff_mode', true);
-      ini.WriteInteger('audio', 'in_channel', 0);
+        ini.WriteBool('audio', 'diff_mode', true);
+        ini.WriteInteger('audio', 'in_channel', 0);
       end;
 
       ini.WriteBool('audio', 'autolevel', Autolevel1.Checked);
 
       ini.WriteInteger('audio', 'tc_offset', TC_offset);
-    }
+    end;
   finally
     ini.Free;
   end;
@@ -759,16 +715,14 @@ var
 begin
   if audio_process <> nil then
   begin
-    thh := audio_process.Handle;
-    audio_process.Terminate;
-    WaitForSingleObject(thh, 0);
-    FreeAndNil(audio_process);
+    audio_process.DeInit;
+    audio_process.Free;
   end;
 
-  audio_process := AudioTCReaderThread.Create(true);
-  audio_process.FreeOnTerminate := false;
-  audio_process.Priority := tpTimeCritical;
+  audio_process := TAudioTCReader.Create(Self);
   audio_process.MainHandle := Self.Handle;
+
+  audio_process.UseSdiIn := SdiParams.UseSDI;
 
   if SdiParams.UseSDI then
   begin
@@ -777,8 +731,9 @@ begin
     audio_process.SDIChannel1 := SdiParams.Channel1;
     audio_process.SDIChannel2 := SdiParams.Channel2;
     audio_process.NeededFrameInterval := SdiParams.NeededFrameInterval;
-    audio_process.DLV_CLSID := SdiParams.DLV_CLSID;
-    audio_process.DLA_CLSID := SdiParams.DLA_CLSID;
+    audio_process.Card_no := SdiParams.Card_no;
+
+    audio_process.VideoPanel := PanelVideo;
   end
   else
   begin
@@ -786,7 +741,11 @@ begin
 
     for i := 0 to Length(AudioDevices) - 1 do
       if AudioDevices[i].Checked then
+      begin
         audio_process.SelectedDevice := AudioDevices[i].Tag;
+        audio_process.DeviceName := AudioDevices[i].Caption;
+        break;
+      end;
 
     if Channel0Sel.Checked then
     begin
@@ -808,7 +767,8 @@ begin
     audio_process.DebugEnabled := AudioDebug;
   end;
 
-  audio_process.Start;
+  audio_process.Init;
+  GroupBoxTC.Caption := audio_process.DeviceName;
 end;
 
 procedure TFormTCreader.Exit1Click(Sender: TObject);
@@ -817,13 +777,9 @@ begin
 end;
 
 procedure TFormTCreader.FormCloseQuery(Sender: TObject; var CanClose: boolean);
-var
-  thh: NativeUINT;
 begin
-  thh := audio_process.Handle;
-  audio_process.Terminate;
-  WaitForSingleObject(thh, 0);
-  FreeAndNil(audio_process);
+  audio_process.DeInit;
+  audio_process.Free;
 end;
 
 procedure TFormTCreader.TelnetSendClick(Sender: TObject);

@@ -118,7 +118,6 @@
         <DCCReference Include="MainUnit.pas">
             <Form>FormTCreader</Form>
         </DCCReference>
-        <DCCReference Include="reader_thread.pas"/>
         <DCCReference Include="UnitChannel.pas"/>
         <DCCReference Include="UnitClip.pas"/>
         <DCCReference Include="UnitEntry.pas">
@@ -127,6 +126,7 @@
         </DCCReference>
         <DCCReference Include="UnitTelnet.pas"/>
         <DCCReference Include="DeckLink.pas"/>
+        <DCCReference Include="reader_unit.pas"/>
         <BuildConfiguration Include="Debug">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -554,14 +554,15 @@
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
-                <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Android" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Win32" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSDevice64" Name="$(PROJECTNAME).app"/>
-                <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
+                <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
-                <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
             </Deployment>
+            <ModelSupport>False</ModelSupport>
         </BorlandProject>
         <ProjectFileVersion>12</ProjectFileVersion>
     </ProjectExtensions>

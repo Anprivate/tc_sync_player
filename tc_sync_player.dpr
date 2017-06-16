@@ -3,12 +3,12 @@ program tc_sync_player;
 uses
   Forms,
   MainUnit in 'MainUnit.pas' {FormTCreader},
-  reader_thread in 'reader_thread.pas',
   UnitChannel in 'UnitChannel.pas',
   UnitClip in 'UnitClip.pas',
   UnitEntry in 'UnitEntry.pas' {FormEntry},
   UnitTelnet in 'UnitTelnet.pas',
-  DeckLink in 'DeckLink.pas';
+  DeckLink in 'DeckLink.pas',
+  reader_unit in 'reader_unit.pas';
 
 {$R *.res}
 

@@ -180,6 +180,14 @@ object FormTCreader: TFormTCreader
       TabOrder = 5
       OnClick = TelnetSendClick
     end
+    object PanelVideo: TPanel
+      Left = 704
+      Top = 48
+      Width = 128
+      Height = 41
+      Caption = 'PanelVideo'
+      TabOrder = 6
+    end
   end
   object Timer1: TTimer
     Enabled = False
